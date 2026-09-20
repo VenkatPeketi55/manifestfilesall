@@ -7,6 +7,7 @@ spec:
   # Requires an nginx Ingress Controller in the cluster.
   ingressClassName: nginx
   rules:
+    - host: app.example.com
       http:
         paths:
           - path: /
