@@ -1,0 +1,62 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-to-database
+  namespace: default
+spec:
+  # Apply this policy only to the database pod.
+  podSelector:
+    matchLabels:
+      app: mysqldb
+  policyTypes:
+    - Ingress
+    - Egress
+  # INGRESS: only application pods may connect to the database.
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: app
+      ports:
+        - protocol: TCP
+          port: 3306
+  # EGRESS: allow the database pod to resolve cluster DNS names.
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-http-to-app
+  namespace: default
+spec:
+  # Apply this policy only to the application pods.
+  podSelector:
+    matchLabels:
+      app: app
+  policyTypes:
+    - Ingress
+    - Egress
+  # INGRESS: allow HTTP traffic through the Service or Ingress.
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 80
+  # EGRESS: allow the app to reach the database and cluster DNS.
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mysqldb
+      ports:
+        - protocol: TCP
+          port: 3306
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

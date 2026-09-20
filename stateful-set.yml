@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysqldb
+  namespace: default
+spec:
+  serviceName: mysqldb
+  # Run one database pod with a stable name and persistent identity.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysqldb
+  template:
+    metadata:
+      labels:
+        app: mysqldb
+    spec:
+      containers:
+        - name: dbcontainer
+          # Replace this image only if the database image changes.
+          image: venkatpeketi55/phpimage:dbimage
+          ports:
+            - name: mysql
+              containerPort: 3306
+          # Load database credentials and settings from the Kubernetes Secret.
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_NAME
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_USERNAME
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_PASSWORD
+          # Keep database resource usage within the namespace quota.
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          # Mount the persistent database volume inside the container.
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+      # Attach the separately managed PVC to the database pod.
+      volumes:
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-data-pvc

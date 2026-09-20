@@ -1,0 +1,11 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: app-pdb
+  namespace: default
+spec:
+  # Keep at least one application pod available during voluntary disruptions.
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: app

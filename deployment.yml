@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deployment
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+        - name: cont1
+          image: venkatpeketi55/phpimage:appimage
+          ports:
+            - containerPort: 80
+          
+          # Readiness controls when a pod can receive traffic.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          
+          # Liveness restarts the container if it stops responding.
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          
+          # Import non-sensitive settings from config-map.yml.
+          envFrom:
+            - configMapRef:
+                name: app-config
+          
+          # Keep each replica within the limits in resource-quota.yml.
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
